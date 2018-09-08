@@ -58,9 +58,9 @@ int main(int argc, char **argv) {
 
     if (mode == "test") {
 
-        test("../test", ".zip");
-        test("../test", ".txt");
-        test("../music", ".zip");
+        test("../../tests/test1", ".txt");
+        test("../../tests/test2", ".txt");
+        test("../../tests/test3", ".7z");
 
     } else {
         if (argc == 4) {
