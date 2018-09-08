@@ -148,7 +148,6 @@ void huffman::compress(reader &in, writer &out) {
     if (number_of_symbols == 0) {
         // just nothing
     } else if (number_of_symbols == 1) {
-        //todo: write 1 and than number of digits for number (optional)
         out << 1 << last;
         for (int16_t i = 56; i >= 0; i -= 8) {
             out << (counter[last] >> i) % 256;
@@ -189,13 +188,16 @@ void huffman::compress(reader &in, writer &out) {
                 }
             }
         }
+        uint8_t bits_counter = 0;
         if (buffer_fullness != 0) {
             while (buffer_fullness < 8) {
                 cur_buffer <<= 1;
+                bits_counter++;
                 buffer_fullness++;
             }
             out << cur_buffer;
         }
+        out << 8 - bits_counter-1;
     }
 }
 
@@ -255,7 +257,7 @@ void huffman::read_tree(reader &in) {
 
 void huffman::debug_write_tree(tree_node *node, std::string s) {
     if (node->character != 256) {
-        std::cout << node->character << std::endl;
+        std::cout << node->character << " " << static_cast<char>(node->character) << std::endl;
     }
     if (node->left) {
         std::cout << s << "l" << std::endl;
@@ -270,7 +272,7 @@ void huffman::decompress(reader &in, writer &out) {
         return;
     }
     unsigned char mode = in.next();
-    if (mode != 0) {
+    if (mode > 0) {
         unsigned char ch = in.next();
         uint64_t count = 0;
         // read 64
@@ -283,41 +285,34 @@ void huffman::decompress(reader &in, writer &out) {
         }
     } else {
         read_tree(in);
+        //debug_write_tree(root, "");
 
         tree_node *cur_node = root;
+        uint8_t ch1 = static_cast<uint8_t>(in.next());
         while (in.has_next()) {
-            uint8_t ch = static_cast<uint8_t>(in.next());
-
-            uint8_t last_1_flag = 9;
+            uint8_t ch2 = static_cast<uint8_t>(in.next());
+            uint8_t bits_counter = 8;
             if (!in.has_next()) {
-                if (ch == 0) {
-                    // out << 0;
-                    return;
-                }
-                uint8_t ch_copy = ch;
-                last_1_flag = 0;
-                while (ch_copy % 2 == 0) {
-                    ch_copy >>= 1;
-                    last_1_flag++;
-                }
-                last_1_flag = 8 - last_1_flag;
+                bits_counter = ch2;
             }
-
-
+            
             uint8_t reversed_ch = 0;
             for (uint8_t j = 0; j < 8; j++) {
                 reversed_ch <<= 1;
-                if (ch % 2 == 1) {
+                if (ch1 % 2 == 1) {
                     reversed_ch++;
                 }
-                ch >>= 1;
+                ch1 >>= 1;
             }
-            ch = reversed_ch;
-            for (int8_t i = 0; i < 8; i++) {
-                if (i == last_1_flag) {
-                    return;
-                }
-                if (ch % 2 == 1) {
+            ch1 = reversed_ch;
+
+            int8_t max_bit = 8;
+            if (!in.has_next()) {
+                max_bit = bits_counter;
+            }
+
+            for (int8_t i = 0; i < max_bit; i++) {
+                if (ch1 % 2 == 1) {
                     cur_node = cur_node->left;
                 } else {
                     cur_node = cur_node->right;
@@ -326,8 +321,10 @@ void huffman::decompress(reader &in, writer &out) {
                     out << static_cast<unsigned char>(cur_node->character);
                     cur_node = root;
                 }
-                ch /= 2;
+                ch1 /= 2;
             }
+
+            ch1 = ch2;
         }
 
     }
