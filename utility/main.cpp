@@ -1,6 +1,8 @@
 #include <iostream>
+#include <cassert>
 #include "file_huffman.h"
 #include "file_reader.h"
+#include "file_writer.h"
 
 bool compare_files(std::string const &file1, std::string const &file2) {
     bool eq = true;
@@ -43,8 +45,17 @@ bool test(std::string fileName, std::string format) {
         std::cout << "correct" << std::endl;
     } else {
         std::cout << "wrong" << std::endl;
+        assert(false);
     }
     std::cout << "________________________\n" << std::endl;
+}
+
+void generate_file(std::string fileName, std::string format, uint32_t length) {
+    file_writer writer(fileName + format);
+    for (uint32_t i = 0; i < length; i++) {
+        writer.write(static_cast<char>(rand_r(232434) % 256));
+    }
+    writer.close();
 }
 
 int main(int argc, char **argv) {
@@ -61,6 +72,28 @@ int main(int argc, char **argv) {
         test("../../tests/test1", ".txt");
         test("../../tests/test2", ".txt");
         test("../../tests/test3", ".7z");
+        test("../../tests/unicode_start", "");
+
+        generate_file("../../tests/file", "", 0);
+        test("../../tests/file", "");
+
+        for (uint32_t i = 0; i < 200; i++) {
+            std::cout <<"10:\t"<< i << std::endl;
+            generate_file("../../tests/file", "", 10);
+            test("../../tests/file", "");
+        }
+
+        for (uint32_t i = 0; i < 50; i++) {
+            std::cout <<"100:\t"<< i << std::endl;
+            generate_file("../../tests/file", "", 100);
+            test("../../tests/file", "");
+        }
+
+        for (uint32_t i = 0; i < 5; i++) {
+            std::cout <<"1000:\t"<< i << std::endl;
+            generate_file("../../tests/file", "", 1000);
+            test("../../tests/file", "");
+        }
 
     } else {
         if (argc == 4) {
