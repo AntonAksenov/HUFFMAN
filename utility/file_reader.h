@@ -11,7 +11,7 @@ struct file_reader : reader {
 
     explicit file_reader(const std::string &file_name);
 
-    ~file_reader();
+    ~file_reader() override;
 
     void open(const std::string &file_name);
 
@@ -21,9 +21,9 @@ struct file_reader : reader {
 
     void buff_read();
 
-    unsigned char next();
+    unsigned char next() override;
 
-    bool has_next();
+    bool has_next() override;
 
     file_reader& operator>>(unsigned char &ch);
 
